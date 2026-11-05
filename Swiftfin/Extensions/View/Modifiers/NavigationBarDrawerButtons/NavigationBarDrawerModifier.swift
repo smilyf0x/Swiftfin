@@ -37,6 +37,7 @@ struct NavigationBarFilterDrawerModifier: ViewModifier {
         .padding(.bottom, 5)
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
+        .clippedToSideSafeArea()
     }
 
     func body(content: Content) -> some View {
