@@ -10,6 +10,9 @@ import SwiftUI
 
 struct NavigationBarFilterDrawerModifier: ViewModifier {
 
+    @Environment(\.frameForParentView)
+    private var frameForParentView
+
     @FocusState
     private var focusedFilter: FilterTrack.FocusTarget?
 
@@ -18,13 +21,19 @@ struct NavigationBarFilterDrawerModifier: ViewModifier {
 
     let types: [ItemFilterType]
 
+    /// Side safe area, e.g. the vertical bars on the outer display of iPhone Duo.
+    private var sideInsets: EdgeInsets {
+        frameForParentView[.navigationStack]?.safeAreaInsets ?? .zero
+    }
+
     private var drawer: some View {
         ScrollView(.horizontal) {
             HStack {
                 FilterTrack(viewModel: viewModel, types: types, focus: $focusedFilter)
             }
         }
-        .contentMargins(.horizontal, 16, for: .scrollContent)
+        .contentMargins(.leading, 16 + sideInsets.leading, for: .scrollContent)
+        .contentMargins(.trailing, 16 + sideInsets.trailing, for: .scrollContent)
         .padding(.bottom, 5)
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
