@@ -223,7 +223,42 @@ struct EdgePaddingModifier: ViewModifier {
     }
 }
 
+/// Keeps rows that deliberately bleed to the window edge (`CollectionHStack` with
+/// `clipsToBounds(false)`) from drawing under the side safe area, e.g. the vertical
+/// bars on the outer display of iPhone Duo.
+///
+/// Without a side safe area the mask is far wider than the view, so nothing is clipped.
+/// The mask is always present so toggling the insets doesn't change the view's identity
+/// and reset the scroll position. Vertically it is extended so shadows and selection
+/// borders aren't cut off.
+struct SideSafeAreaClipModifier: ViewModifier {
+
+    @Environment(\.frameForParentView)
+    private var frameForParentView
+
+    private var hasSideSafeArea: Bool {
+        #if os(iOS)
+        let insets = frameForParentView[.navigationStack]?.safeAreaInsets ?? .zero
+        return insets.leading > 0 || insets.trailing > 0
+        #else
+        return false
+        #endif
+    }
+
+    func body(content: Content) -> some View {
+        content.mask {
+            Rectangle()
+                .padding(.horizontal, hasSideSafeArea ? 0 : -10000)
+                .padding(.vertical, -1000)
+        }
+    }
+}
+
 extension View {
+
+    func clippedToSideSafeArea() -> some View {
+        modifier(SideSafeAreaClipModifier())
+    }
 
     func layoutContainer(size: CGSize) -> some View {
         transformEnvironment(\.frameForParentView) { frames in
