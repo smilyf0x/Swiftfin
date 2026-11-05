@@ -144,6 +144,7 @@ struct ItemImagesView: View {
             .contentInsetAdjustmentBehavior(.never)
             .insets(horizontal: viewLayout.edgePadding)
             .itemSpacing(viewLayout.itemSpacing)
+            .clippedToSideSafeArea()
             .id(selectedType)
             .transition(.opacity.animation(.linear(duration: 0.1)))
         } else {

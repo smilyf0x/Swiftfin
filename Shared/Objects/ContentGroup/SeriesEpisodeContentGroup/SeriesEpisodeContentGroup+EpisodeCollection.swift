@@ -176,6 +176,7 @@ extension SeriesEpisodeContentGroup {
                 .scrollBehavior(.continuousLeadingEdge)
                 #if os(iOS)
                 .contentInsetAdjustmentBehavior(.never)
+                .clippedToSideSafeArea()
                 #endif
                 .focusSection()
                 .focused($focusedSection, equals: .episodes)

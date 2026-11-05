@@ -56,6 +56,7 @@ struct PosterHStack<
         .scrollBehavior(.continuousLeadingEdge)
         #if os(iOS)
         .contentInsetAdjustmentBehavior(.never)
+        .clippedToSideSafeArea()
         #endif
         .withViewContext(.isThumb)
     }
