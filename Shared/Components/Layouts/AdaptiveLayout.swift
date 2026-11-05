@@ -224,40 +224,59 @@ struct EdgePaddingModifier: ViewModifier {
 }
 
 /// Keeps rows that deliberately bleed to the window edge (`CollectionHStack` with
-/// `clipsToBounds(false)`) from drawing under the side safe area, e.g. the vertical
-/// bars on the outer display of iPhone Duo.
+/// `clipsToBounds(false)`) from drawing under the vertical bar, e.g. on the outer
+/// display of iPhone Duo.
 ///
-/// Without a side safe area the mask is far wider than the view, so nothing is clipped.
-/// The mask is always present so toggling the insets doesn't change the view's identity
-/// and reset the scroll position. Vertically it is extended so shadows and selection
-/// borders aren't cut off.
-struct SideSafeAreaClipModifier: ViewModifier {
+/// Only the edge where the system places the vertical bar is clipped. On devices and
+/// contexts without a vertical bar nothing is applied, so behavior matches a plain row.
+#if os(iOS)
+@available(iOS 27.1, *)
+private struct VerticalBarClipModifier: ViewModifier {
 
+    @Environment(\.toolbarVerticalEdge)
+    private var verticalBarEdge
     @Environment(\.frameForParentView)
     private var frameForParentView
 
-    private var hasSideSafeArea: Bool {
-        #if os(iOS)
+    private var clippedEdge: HorizontalEdge? {
         let insets = frameForParentView[.navigationStack]?.safeAreaInsets ?? .zero
-        return insets.leading > 0 || insets.trailing > 0
-        #else
-        return false
-        #endif
+
+        switch verticalBarEdge {
+        case .leading where insets.leading > 0: return .leading
+        case .trailing where insets.trailing > 0: return .trailing
+        default: return nil
+        }
     }
 
     func body(content: Content) -> some View {
-        content.mask {
-            Rectangle()
-                .padding(.horizontal, hasSideSafeArea ? 0 : -10000)
-                .padding(.vertical, -1000)
+        if let clippedEdge {
+            // Extended vertically so shadows and selection borders aren't cut off.
+            content.mask {
+                Rectangle()
+                    .padding(.leading, clippedEdge == .leading ? 0 : -10000)
+                    .padding(.trailing, clippedEdge == .trailing ? 0 : -10000)
+                    .padding(.vertical, -1000)
+            }
+        } else {
+            content
         }
     }
 }
+#endif
 
 extension View {
 
+    @ViewBuilder
     func clippedToSideSafeArea() -> some View {
-        modifier(SideSafeAreaClipModifier())
+        #if os(iOS)
+        if #available(iOS 27.1, *) {
+            modifier(VerticalBarClipModifier())
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
     }
 
     func layoutContainer(size: CGSize) -> some View {
